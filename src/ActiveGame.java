@@ -1,6 +1,15 @@
 import java.io.IOException;
 
-record ActiveGame(Player player1, Player player2) implements Runnable {
+class ActiveGame implements Runnable {
+    final Player player1;
+    final Player player2;
+    final Server server;
+
+    ActiveGame(Player player1, Player player2, Server server) {
+        this.player1 = player1;
+        this.player2 = player2;
+        this.server = server;
+    }
 
     @Override
     public void run() {
@@ -21,6 +30,12 @@ record ActiveGame(Player player1, Player player2) implements Runnable {
 
             try {
                 String command = curPlayer.dataInputStream.readUTF();
+
+                if (command.equals("end") && nextPlayer.dataInputStream.readUTF().equals("end")) {
+                    server.endGame(this);
+                    return;
+                }
+
                 nextPlayer.dataOutputStream.writeUTF(command);
                 if (command.equals("promote")) {
                     String promotionCoinType = curPlayer.dataInputStream.readUTF();
@@ -30,7 +45,6 @@ record ActiveGame(Player player1, Player player2) implements Runnable {
                 // (row1, col1) -> (row2, col2)
                 for (int i = 0; i < 4; i++) {
                     int x = curPlayer.dataInputStream.readInt();
-                    System.out.println("x = " + x);
                     nextPlayer.dataOutputStream.writeInt(7 - x);
                 }
 
